@@ -264,7 +264,7 @@ impl Mem {
     /// Create a fresh instance of guest memory.
     pub fn new() -> Mem {
         // This will hopefully get the host OS to lazily allocate the memory.
-        let layout = std::alloc::Layout::new::<Bytes>().align_to(4096).unwrap();
+        let layout = std::alloc::Layout::new::<Bytes>();
         let bytes = unsafe { std::alloc::alloc_zeroed(layout) as *mut Bytes };
 
         let allocator = allocator::Allocator::new();
