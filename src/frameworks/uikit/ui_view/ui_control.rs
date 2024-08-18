@@ -335,6 +335,9 @@ forControlEvents:(UIControlEvents)events {
 
 @end
 
+    @implementation UIRoundedRectButton: UIButton
+@end
+    
 @implementation UISwitch: UIControl
 
 @end
