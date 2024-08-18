@@ -145,7 +145,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setEnabled:(bool)enabled {
     env.objc.borrow_mut::<UIControlHostObject>(this).enabled = enabled;
 }
-
+- (())setBorderStyle:(NSInteger)_style {
+    // TODO
+}
+- (())setFont:(id)new_font { // UIFont*
+}
+    
 - (bool)isSelected {
     env.objc.borrow::<UIControlHostObject>(this).selected
 }
