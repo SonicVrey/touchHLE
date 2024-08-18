@@ -279,7 +279,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)defaultCStringEncoding {
     nil
 }
-
+    
++ (id)string {
+    let null: NSZonePtr = MutPtr::null();
+    msg_class![env; NSString allocWithZone:null]
+}
+    
 + (id)stringWithString:(id)string { // NSString*
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithString:string];
@@ -889,7 +894,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new_string = from_rust_string(env, String::from(res));
     autorelease(env, new_string)
 }
-
+    
+// TODO: handle in copy
+- (id)initWithBytesNoCopy:(ConstPtr<u8>)bytes
+                   length:(NSUInteger)len
+                 encoding:(NSStringEncoding)encoding
+             freeWhenDone:(bool)free_buffer {
+    assert!(!free_buffer);
+    msg![env; this initWithBytes:bytes length:len encoding:encoding]
+}
+    
 - (id)stringByAppendingPathComponent:(id)component { // NSString*
     if component == nil {
         return msg![env; this copy];
@@ -1065,6 +1079,197 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+     3 changes: 3 additions & 0 deletions 3 
+src/audio/openal_soft_wrapper/lib.rs
+ 
+Original file line number	Diff line number	Diff line change
+@@ -160,6 +160,8 @@ extern "C" {
+    pub fn alSource3i(source: ALuint, param: ALenum, value1: ALint, value2: ALint, value3: ALint);
+    pub fn alSourceiv(source: ALuint, param: ALenum, values: *const ALint);
+
+    pub fn alEnable(capability: ALenum);
+
+    pub fn alGetSourcef(source: ALuint, param: ALenum, value: *mut ALfloat);
+    pub fn alGetSource3f(
+        source: ALuint,
+@@ -178,6 +180,7 @@ extern "C" {
+        value3: *mut ALint,
+    );
+    pub fn alGetSourceiv(source: ALuint, param: ALenum, values: *mut ALint);
+    pub fn alGetString(param: ALenum) -> *const ALchar;
+
+    pub fn alSourcePlay(source: ALuint);
+    pub fn alSourcePause(source: ALuint);
+   23 changes: 22 additions & 1 deletion 23 
+src/frameworks/core_foundation/cf_string.rs
+ 
+Original file line number	Diff line number	Diff line change
+@@ -13,12 +13,13 @@ use super::cf_dictionary::CFDictionaryRef;
+use crate::abi::{DotDotDot, VaList};
+use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_foundation::{CFIndex, CFOptionFlags};
+use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::{ns_string, NSInteger};
+use crate::mem::{ConstPtr, MutPtr};
+use crate::objc::{id, msg, msg_class};
+use crate::Environment;
+
+pub type CFStringRef = super::CFTypeRef;
+pub type CFMutableStringRef = CFStringRef;
+
+pub type CFStringEncoding = u32;
+pub const kCFStringEncodingASCII: CFStringEncoding = 0x600;
+@@ -115,6 +116,24 @@ fn CFStringGetCString(
+                       encoding:encoding]
+}
+
+fn CFStringCreateMutableCopy(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    max_length: CFIndex,
+    the_string: CFStringRef
+) -> CFMutableStringRef {
+    assert!(allocator.is_null());
+    assert_eq!(max_length, 0);
+    let ns_mut_string: id = msg_class![env; NSMutableString alloc];
+    msg![env; ns_mut_string initWithString:the_string]
+}
+
+fn CFStringNormalize(
+    env: &mut Environment, the_string: CFMutableStringRef, the_form: NSInteger
+) {
+    // TODO
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFStringConvertEncodingToNSStringEncoding(_)),
+    export_c_func!(CFStringConvertNSStringEncodingToEncoding(_)),
+@@ -123,4 +142,6 @@ pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
+    export_c_func!(CFStringCompare(_, _, _)),
+    export_c_func!(CFStringGetCString(_, _, _, _)),
+    export_c_func!(CFStringCreateMutableCopy(_, _, _)),
+    export_c_func!(CFStringNormalize(_, _)),
+];
+   15 changes: 15 additions & 0 deletions 15 
+src/frameworks/foundation/ns_date.rs
+ 
+Original file line number	Diff line number	Diff line change
+@@ -39,6 +39,21 @@ pub const CLASSES: ClassExports = objc_classes! {
+    autorelease(env, new)
+}
+
++ (id)distantFuture {
+    let time_interval = SystemTime::now()
+        .duration_since(apple_epoch())
+        .unwrap()
+        .as_secs_f64() * 2.0;
+    let host_object = Box::new(NSDateHostObject {
+        time_interval
+    });
+    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+
+    log_dbg!("[(NSDate*){:?} distantFuture]: date {:?}", this, new);
+
+    autorelease(env, new)
+}
+
+- (NSTimeInterval)timeIntervalSinceDate:(id)anotherDate {
+    assert!(!anotherDate.is_null());
+    let host_object = env.objc.borrow::<NSDateHostObject>(this);
+   13 changes: 11 additions & 2 deletions 13 
+src/frameworks/foundation/ns_run_loop.rs
+ 
+Original file line number	Diff line number	Diff line change
+@@ -8,15 +8,15 @@
+//! Resources:
+//! - Apple's [Threading Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/Introduction/Introduction.html)
+
+use super::{ns_string, ns_timer};
+use super::{ns_string, ns_timer, NSTimeInterval};
+use crate::dyld::{ConstantExports, HostConstant};
+use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
+use crate::frameworks::core_foundation::cf_run_loop::{
+    kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
+};
+use crate::frameworks::{core_animation, media_player, uikit};
+use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
+use crate::Environment;
+use crate::{Environment, msg_class};
+use std::time::{Duration, Instant};
+
+/// `NSString*`
+@@ -112,6 +112,15 @@ pub const CLASSES: ClassExports = objc_classes! {
+- (())run {
+    run_run_loop(env, this, /* single_iteration: */ false);
+}
+- (())runMode:(NSRunLoopMode)mode
+   beforeDate:(id)limit_date { // NSDate *
+    let default_mode = ns_string::get_static_str(env, NSDefaultRunLoopMode);
+    assert!(msg![env; mode isEqualToString:default_mode]);
+    let distant_future: id = msg_class![env; NSDate distantFuture];
+    let delta: NSTimeInterval = msg![env; limit_date timeIntervalSinceDate:distant_future];
+    assert!(delta < 10.0);
+    run_run_loop(env, this, /* single_iteration: */ false);
+}
+// TODO: other run methods
+
+@end
+   33 changes: 33 additions & 0 deletions 33 
+src/frameworks/foundation/ns_string.rs
+ 
+Original file line number	Diff line number	Diff line change
+@@ -250,6 +250,11 @@ pub const CLASSES: ClassExports = objc_classes! {
+// For the time being, that will always be _touchHLE_NSString.
+@implementation NSString: NSObject
+
++ (id)string {
+    let null: NSZonePtr = MutPtr::null();
+    msg_class![env; NSString allocWithZone:null]
+}
+
++ (id)allocWithZone:(NSZonePtr)zone {
+    // NSString might be subclassed by something which needs allocWithZone:
+    // to have the normal behaviour. Unimplemented: call superclass alloc then.
+@@ -887,6 +892,15 @@ pub const CLASSES: ClassExports = objc_classes! {
+    this
+}
+
+// TODO: handle in copy
+- (id)initWithBytesNoCopy:(ConstPtr<u8>)bytes
+                   length:(NSUInteger)len
+                 encoding:(NSStringEncoding)encoding
+             freeWhenDone:(bool)free_buffer {
+    assert!(!free_buffer);
+    msg![env; this initWithBytes:bytes length:len encoding:encoding]
+}
+
+- (id)initWithString:(id)string { // NSString *
+    // TODO: optimize for more common cases (or maybe just call copy?)
+    let mut code_units = Vec::new();
+@@ -939,6 +953,25 @@ pub const CLASSES: ClassExports = objc_classes! {
+
+@end
+
+@implementation NSMutableString: _touchHLE_NSString
+
++ (id)allocWithZone:(NSZonePtr)zone {
+    assert!(this == env.objc.get_known_class("NSMutableString", &mut env.mem));
+    msg_class![env; _touchHLE_NSString allocWithZone:zone]
+}
+
++ (id)stringWithCapacity:(NSUInteger)_capacity {
+    msg_class![env; NSMutableString string]
+}
+
+- (())setString:(id)aString { // NSString*
+    let str = to_rust_string(env, aString);
+    let host_object = StringHostObject::Utf8(str);
+    *env.objc.borrow_mut(this) = host_object;
+}
+
+@end
+    
 // NSMutableString is an abstract class. A subclass must everything
 // NSString provides, plus:
 // - (void)replaceCharactersInRange:(NSRange)range withString:(NSString)string;
