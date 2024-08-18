@@ -25,7 +25,7 @@ use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContext
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_array, NSInteger, NSUInteger};
-use crate::mem::ConstVoidPtr;
+use crate::mem::{ConstVoidPtr, MutVoidPtr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
     HostObject, NSZonePtr, SEL,
