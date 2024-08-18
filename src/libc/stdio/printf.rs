@@ -451,6 +451,66 @@ fn vsprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, arg: 
         dest_slice[i] = byte;
     }
 
+    fn vsscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, arg: VaList) -> i32 {
+    log_dbg!(
+        "vsscanf({:?}, {:?} ({:?}), ...)",
+        src,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let mut args = arg;
+
+    let mut src_ptr = src.cast_mut();
+    let mut format_char_idx = 0;
+
+    let mut matched_args = 0;
+
+    loop {
+        let c = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        if c == b'\0' {
+            break;
+        }
+        if c != b'%' {
+            let cc = env.mem.read(src_ptr);
+            if c != cc {
+                return matched_args - 1;
+            }
+            src_ptr += 1;
+            continue;
+        }
+
+        let specifier = env.mem.read(format + format_char_idx);
+        format_char_idx += 1;
+
+        match specifier {
+            b'd' => {
+                let mut val: i32 = 0;
+                while let c @ b'0'..=b'9' = env.mem.read(src_ptr) {
+                    val = val * 10 + (c - b'0') as i32;
+                    src_ptr += 1;
+                }
+                let c_int_ptr: ConstPtr<i32> = args.next(env);
+                env.mem.write(c_int_ptr.cast_mut(), val);
+            }
+            b'g' | b'f' => {
+                let (number, length) = atof_inner(env, src_ptr.cast_const()).unwrap();
+                src_ptr += length;
+                let c_f32_ptr: ConstPtr<f32> = args.next(env);
+                env.mem.write(c_f32_ptr.cast_mut(), number as f32);
+            }
+            // TODO: more specifiers
+            _ => unimplemented!("Format character '{}'", specifier as char),
+        }
+
+        matched_args += 1;
+    }
+
+    matched_args
+}
+    
     res.len().try_into().unwrap()
 }
 
