@@ -65,6 +65,24 @@ pub const S_IWUSR: mode_t = 0o0000200; /* write permission, owner */
 #[allow(dead_code)]
 pub const S_IXUSR: mode_t = 0o0000100; /* execute/search permission, owner */
 
+
+fn stat(env: &mut Environment, path: ConstPtr<u8>, buf: MutVoidPtr) -> i32 {
+    //log!("stat {}", env.mem.cstr_at_utf8(path).unwrap());
+
+    let path_string = env.mem.cstr_at_utf8(path).unwrap().to_owned();
+    let guest_path = GuestPath::new(&path_string);
+    let is_dir = env.fs.is_dir(guest_path);
+
+    let st_mode_ptr = (buf + 0x4).cast::<mode_t>();
+    let mode: mode_t = if is_dir {
+        0x4000
+    } else {
+        0x8000
+    };
+    env.mem.write(st_mode_ptr, mode.try_into().unwrap());
+    0
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Default)]
 #[repr(C, packed)]
@@ -222,9 +240,8 @@ fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
 }
 
 pub const FUNCTIONS: FunctionExports = &[
+    pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mkdir(_, _)),
     export_c_func!(stat(_, _)),
-    export_c_func!(statfs(_, _)),
-    export_c_func!(lstat(_, _)),
     export_c_func!(fstat(_, _))
 ];
