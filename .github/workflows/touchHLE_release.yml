@@ -7,8 +7,8 @@ on:
     branches: [ "Unofficial-Stole-Code" ]
 
 env:
-  CARGO_TERM_COLOR: always
-
+  CARGO_TERM_COLOR: alway
+  
 jobs:
   build-osx:
 
