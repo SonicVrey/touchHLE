@@ -98,7 +98,7 @@ jobs:
     - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}
       name: Extract Gradle
       run: 7z -ogradle x gradle-7.3-bin.zip
-    # We need to instal correct version of Android NDK manually
+    # We need to install the correct version of Android NDK manually
     - name: Try to get a cached copy of Android NDK
       id: cache-android-ndk
       uses: actions/cache@v3
@@ -116,9 +116,14 @@ jobs:
     # Why isn't there a command for this?
     - name: Generate local.properties file
       run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties
-    # Let's not even bother with linting (would need to build for host, not just
-    # Android, which makes things more complicated) or trying to run tests
-    # (would have to run on Android 😰).
+    - name: Lint
+      run: dev-scripts/lint.sh ndk -t arm64-v8a
+      env:
+        # The version should match the ndkVersion defined in `android\app\build.gradle`
+        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        ANDROID_NDK_HOME: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+    # Don't attempt to run tests (can't run on Android).
     - name: Build for Android
       run: cd android && ../gradle/gradle-7.3/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
       env:
@@ -138,9 +143,6 @@ jobs:
       with:
         fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
     # Apparently the Windows runner already has clang-format? That's nice.
-    - name: Check formatting
-      shell: bash # no command output without this
-      run: dev-scripts/format.sh --check
     - name: Get Submodules
       run: git submodule update --init
     - name: Try to get cached copy of Boost
@@ -158,9 +160,6 @@ jobs:
     # This is the earliest point at which we can do linting: clippy will end up
     # building dynarmic, which needs Boost, but we don't need LLVM until
     # building tests.
-    - name: Lint
-      shell: bash # no command output without this
-      run: dev-scripts/lint.sh
     - name: Try to get cached copy of LLVM
       id: cache-llvm
       uses: actions/cache@v3
@@ -173,8 +172,6 @@ jobs:
     - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
       name: Extract LLVM
       run: 7z -otests/llvm x LLVM-12.0.1-win64.exe
-    - name: Test
-      run: cargo test
     - name: Build
       run: cargo build --release && move target/release/touchHLE.exe .
     - uses: actions/upload-artifact@v3
