@@ -231,6 +231,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+    - (())removeAllObjects {
+    let mut old_host_obj = std::mem::replace(
+        env.objc.borrow_mut(this),
+        SetHostObject {
+            dict: Default::default(),
+        },
+    );
+    old_host_obj.dict.release(env);
+}
+    
 - (id)allObjects {
     let objects = env.objc.borrow_mut::<SetHostObject>(this).dict.iter_keys().collect();
     ns_array::from_vec(env, objects)

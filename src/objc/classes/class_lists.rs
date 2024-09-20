@@ -54,6 +54,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_sort_descriptor::CLASSES,
     foundation::ns_string::CLASSES,
     foundation::ns_thread::CLASSES,
+    foundation::ns_xml_parser::CLASSES,
     foundation::ns_timer::CLASSES,
     foundation::fake_cftimer_target::CLASSES,
     foundation::ns_time_zone::CLASSES,
