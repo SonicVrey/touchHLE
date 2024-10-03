@@ -2,9 +2,9 @@ name: Build touchHLE
 
 on:
   push:
-    branches: [ "trunk" ]
+    branches: [ "patch-1" ]
   pull_request:
-    branches: [ "trunk" ]
+    branches: [ "patch-1" ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -98,7 +98,7 @@ jobs:
     - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}
       name: Extract Gradle
       run: 7z -ogradle x gradle-7.3-bin.zip
-    # We need to install the correct version of Android NDK manually
+    # We need to instal correct version of Android NDK manually
     - name: Try to get a cached copy of Android NDK
       id: cache-android-ndk
       uses: actions/cache@v3
@@ -116,14 +116,9 @@ jobs:
     # Why isn't there a command for this?
     - name: Generate local.properties file
       run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties
-    - name: Lint
-      run: dev-scripts/lint.sh ndk -t arm64-v8a
-      env:
-        # The version should match the ndkVersion defined in `android\app\build.gradle`
-        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
-        ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
-        ANDROID_NDK_HOME: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
-    # Don't attempt to run tests (can't run on Android).
+    # Let's not even bother with linting (would need to build for host, not just
+    # Android, which makes things more complicated) or trying to run tests
+    # (would have to run on Android 😰).
     - name: Build for Android
       run: cd android && ../gradle/gradle-7.3/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
       env:
