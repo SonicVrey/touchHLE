@@ -9,6 +9,7 @@ use super::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::frameworks::core_graphics::cg_color::{CGColorRef, CGColorRelease, CGColorRetain};
 use crate::frameworks::core_graphics::cg_context::CGContextSetRGBFillColor;
 use crate::frameworks::core_graphics::{cg_color, CGFloat};
+use crate::frameworks::foundation::{NSInteger, NSUInteger};
 use crate::mem::MutPtr;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, ClassExports, HostObject, NSZonePtr, ObjC,
@@ -62,6 +63,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
++ (id)CGColor {
+    nil
+}
+
 + (id)colorWithCGColor:(CGColorRef)cg_color {
     let new: id = msg![env; this alloc];
     let new: id = msg![env; new initWithCGColor:cg_color];
@@ -92,9 +97,33 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)grayColor {
     get_standard_color(env, _cmd, 1.0/2.0, 1.0/2.0, 1.0/2.0, 1.0)
 }
++ (id)groupTableViewBackgroundColor {
+    nil
+}
+
++ (id)colorWithPatternImage:(NSUInteger)_image {
+    msg![env; this init]
+}
+
 + (id)lightGrayColor {
     get_standard_color(env, _cmd, 2.0/3.0, 2.0/3.0, 2.0/3.0, 1.0)
 }
++ (id)lightTextColor {
+    nil
+}
+
++ (id)darkTextColor {
+    nil
+}
+
++ (id)viewFlipsideBackgroundColor {
+    nil
+}
+
++ (())colorWithHue:(NSInteger)hue saturation:(bool)_saturation brightness:(bool)_brightness alpha:(bool)_alpha  {
+    // TODO
+}
+
 + (id)blueColor     { get_standard_color(env, _cmd, 0.0, 0.0, 1.0, 1.0) }
 + (id)brownColor    { get_standard_color(env, _cmd, 0.6, 0.4, 0.2, 1.0) }
 + (id)cyanColor     { get_standard_color(env, _cmd, 0.0, 1.0, 1.0, 1.0) }
@@ -143,6 +172,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (id)CGColor {
+    this
+}
+
 - (())set {
     msg![env; this setFill]
     // TODO: set stroke color as well
@@ -173,6 +206,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_UIColor_Static: UIColor
 
 + (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::new(UIColorHostObject {
+        cg_color: nil,
+    });
+    env.objc.alloc_static_object(this, host_object, &mut env.mem)
+}
+
+- (id)colorWithAlphaComponent:(NSZonePtr)_zone {
     let host_object = Box::new(UIColorHostObject {
         cg_color: nil,
     });
