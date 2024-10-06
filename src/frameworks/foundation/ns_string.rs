@@ -1144,6 +1144,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this init]
 }
 
++ (id)rangeOfString:(NSUInteger)_string {
+    msg![env; this init]
+}
+
 + (id)substringWithRange:(NSUInteger)_range {
     msg![env; this init]
 }
