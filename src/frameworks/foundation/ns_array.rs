@@ -636,6 +636,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO
 }
 
++ (())exceptionWithName:(NSInteger)name reason:(bool)_reason userInfo:(bool)_into {
+    // TODO
+}
+
 @end
 
 @implementation NSIndexPath: NSObject
