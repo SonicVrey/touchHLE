@@ -32,10 +32,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this init]
 }
 
-- (id)closeConnection:(NSUInteger)_close {
-    msg![env; this init]
-}
-
 // TODO: this should be the designated initializer
 - (id)initWithNibName:(id)nibNameOrNil // NSString *
                bundle:(id)nibBundleOrNil { // NSBundle *
@@ -72,6 +68,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithStyle:(NSUInteger)_style {
     msg![env; this init]
+}
+
+- (id)closeConnection {
+    nil
 }
 
 - (id)navigationController {
@@ -172,8 +172,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 @implementation DNSViewController: UIViewController
-- (id)closeConnection:(NSUInteger)_close {
-    msg![env; this init]
+- (id)closeConnection {
+    nil
 }
 
 @end
