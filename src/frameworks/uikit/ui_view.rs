@@ -377,6 +377,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
 }
 
+- (id)pauza_gry {
+    nil
+}
+
 - (id)window {
     nil
 }
