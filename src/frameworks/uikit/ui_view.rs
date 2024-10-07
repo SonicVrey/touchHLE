@@ -381,6 +381,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     nil
 }
 
+- (id)zapis_danych {
+    nil
+}
+
 - (id)window {
     nil
 }
