@@ -32,6 +32,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this init]
 }
 
+- (id)closeConnection:(NSUInteger)_close {
+    msg![env; this init]
+}
+
 // TODO: this should be the designated initializer
 - (id)initWithNibName:(id)nibNameOrNil // NSString *
                bundle:(id)nibBundleOrNil { // NSBundle *
@@ -163,6 +167,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation CCViewController:  UIViewController
 - (())performSelectorInBackground:(NSInteger)selector withObject:(bool)_object {
     // TODO
+}
+
+@end
+
+@implementation DNSViewController: UIViewController
+- (id)closeConnection:(NSUInteger)_close {
+    msg![env; this init]
 }
 
 @end
