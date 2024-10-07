@@ -514,6 +514,9 @@ fn CGContextSetRGBStrokeColor(_env: &mut Environment, arg1: f32, arg2: f32) -> f
 fn CGContextSetShadow(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
     arg1.min(arg2)
 }
+fn CGContextSetShadowWithColor(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    arg1.min(arg2)
+}
 fn CGContextSetShouldAntialias(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
     arg1.min(arg2)
 }
@@ -1294,6 +1297,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetLineWidth(_, _)),
     export_c_func!(CGContextSetRGBStrokeColor(_, _)),
     export_c_func!(CGContextSetShadow(_, _)),
+    export_c_func!(CGContextSetShadowWithColor(_, _)),
     export_c_func!(CGContextSetShouldAntialias(_, _)),
     export_c_func!(CGContextSetStrokeColorWithColor(_, _)),
     export_c_func!(CGContextSetShouldSmoothFonts(_, _)),
