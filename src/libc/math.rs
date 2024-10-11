@@ -213,6 +213,9 @@ fn fmodf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
 
 // Maximum, minimum and positive difference functions
 // TODO: implement fdim
+fn alSpeedOfSound(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    arg1.min(arg2)
+}
 fn bind(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
     arg1.min(arg2)
 }
@@ -1197,6 +1200,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fmod(_, _)),
     export_c_func!(fmodf(_, _)),
     // Maximum, minimum and positive difference functions
+    export_c_func!(alSpeedOfSound(_, _)),
     export_c_func!(bind(_, _)),
     export_c_func!(clock_get_time(_, _)),
     export_c_func!(connect(_, _)),
